@@ -1,10 +1,4 @@
 # py-serv
 The uncensored, no-rules server to use anywhere in the world. Download client.py to get started. 
 
-CHANGELOG:
-v1.0.0:
-  Added TLS encryption to client.py and server.py
-  Server is up and running. Will implement a static IP soon.
-v1.0.1:
-  Added Static IP addres to survive server reboot.
-  
+Server is running, connect to it form port 500 to api.python-chat.com
