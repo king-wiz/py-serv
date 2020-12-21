@@ -23,6 +23,7 @@ CLEAN_DISCONNECT = 'AL DISCONNECTED'
 REPLY = 'R MESSAGE_SENT'
 
 SETUSERNAME = 'SUN'
+HEADER = 64
 
 def decode(packet: str):
     packetl = packet.split()
