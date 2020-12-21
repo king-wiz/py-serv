@@ -5,4 +5,6 @@ CHANGELOG:
 v1.0.0:
   Added TLS encryption to client.py and server.py
   Server is up and running. Will implement a static IP soon.
+v1.0.1:
+  Added Static IP addres to survive server reboot.
   
