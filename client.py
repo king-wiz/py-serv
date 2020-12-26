@@ -129,7 +129,7 @@ class clientn:
                     elif m_type == 'LI' and message == 'SUCCESS':
                         self.token = array[2]
                         LOGGED_IN = True
-                        print("Logged in!")
+                        print("Logged in! Type !disconnect to logout!")
                     elif m_type == 'REG' and message == 'SUCCESS':
                         print("Username registered! Press 1 to log in!")
                     elif m_type == 'AL' and message == 'INVALID_LOGIN':
