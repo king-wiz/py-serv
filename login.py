@@ -7,15 +7,20 @@ import uuid
 
 # Init MySQL connection.
 
-SERVER = 'database-3.ca1ssxyjeifl.us-east-2.rds.amazonaws.com'
+SERVER = 'some database'
 PORT = '3306'
 ADDR = (SERVER, PORT)
 
-mysql_socket = mysql.connector.connect(host=SERVER, user='admin', password='rdstest1')
+mysql_socket = mysql.connector.connect(host=SERVER, user='admin', password='xxxxxxxxxxxxxxx')
 cursor = mysql_socket.cursor(buffered=True)
 
 cursor.execute("USE userdata")
 
+def reconnect():
+    try:
+        mysql_socket = mysql.connector.connect(host=SERVER, user='localhost', password='phoenixpower1')
+    except Exception:
+        pass
 def hash(string: str):
 
     h = hashlib.sha512(string.encode('utf-8')).hexdigest()
@@ -30,6 +35,7 @@ def register(user, password):
     if len(user) == 0 or len(password) == 0:
         return False
 
+    reconnect()
     cursor.execute("""
     
         SELECT
@@ -57,7 +63,7 @@ def register(user, password):
         if len(password) > 16 or len(user) > 16:
 
             return False
-
+        reconnect()
         cursor.execute("""
         
             INSERT INTO user_login (username, salt, password, logged_in, token)
@@ -83,7 +89,7 @@ def register(user, password):
 
 
 def login(user, password):
-
+    reconnect()
     cursor.execute("""
     
         SELECT
@@ -110,7 +116,7 @@ def login(user, password):
 
 
         if hash(password+salt) == password_sum:
-
+            reconnect()
             cursor.execute("""
             
             UPDATE 
@@ -140,7 +146,7 @@ def login(user, password):
         return [False]
 
 def logout(token):
-
+    reconnect()
     cursor.execute("""
 
         UPDATE 
