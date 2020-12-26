@@ -1,22 +1,32 @@
 import socket
 import threading
 import ssl
+import time
+import OpenSSL
 
 SERVER = 'api.python-chat.com'
 PORT = 500
 
-
+LOGGED_IN = False
 
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
 print(f"Connecting to {SERVER}...")
 
-context = ssl.SSLContext(ssl.PROTOCOL_TLSv1_2)
+client = None
 
-addr = (SERVER, PORT)
-sock.connect(addr)
-wrappedSocket = context.wrap_socket(sock)
-client = wrappedSocket
+try:
+    #context = ssl.SSLContext(ssl.PROTOCOL_TLSv1_2)
+    addr = (SERVER, PORT)
+    #wrappedSocket = context.wrap_socket(sock)
+    #wrappedSocket.connect(addr)
+    wrappedSocket = sock
+    client = wrappedSocket
+    client.connect(addr)
+
+except Exception:
+
+    print(f"Error while connecting to {SERVER}. Is the connection offline?")
 
 print(f"Connected to {SERVER}.")
 
@@ -34,12 +44,16 @@ SERVER_DISCONNECT_CLEAN = 'AL DISCONNECTED'
 
 def decode(packet: str):
     packetl = packet.split()
-    string = ''
-    for i in packetl[1:len(packetl)]:
-        string += (f'{i} ')
+    if packetl[0] != 'LI' and packetl[1] != 'REG': 
+        string = ''
+        for i in packetl[1:len(packetl)]:
+            string += (f'{i} ')
     
     
-    return [packetl[0], string.rstrip()]
+        return [packetl[0], string.rstrip()]
+    else:
+
+        return packetl
 
 def encode(msg: str):
 
@@ -54,6 +68,7 @@ class clientn:
         self.conn = client
         self.addr = addr
         self.connected = True
+        self.token = ''
 
     def send(self, msg: str):
         try:
@@ -92,44 +107,61 @@ class clientn:
             CONNECTED = False
             
     def read(self):
-        global CONNECTED
+        global CONNECTED, LOGGED_IN
         while CONNECTED:
-           
+            try:
                 msg = self.conn.recv(512).decode(FORMAT)
                 if msg:
                     array = decode(msg)
                     message = array[1]
                     m_type = array[0]
-                    if m_type == 'M':
+                    if m_type == 'M' and LOGGED_IN:
                         print(f'{message}\n')
                         time.sleep(0.1)
                     elif m_type == 'R' and message == 'MESSAGE_SENT':
                         pass
-                    elif m_type == 'SUN' and message == 'SUCCESS':
-                        print("Username set!")
+                    elif m_type == 'LI' and message == 'SUCCESS':
+                        self.token = array[2]
+                        LOGGED_IN = True
+                        print("Logged in!")
+                    elif m_type == 'REG' and message == 'SUCCESS':
+                        print("Username registered! Restart and press 1 to log in!")
+                    elif m_type == 'AL' and message == 'INVALID_LOGIN':
+                        print("Invalid credentials!")
+                    elif m_type == 'AL' and message == 'INVALID_REGISTER':
+                        print("Oops! The username you want is taken or invalid.")
                     elif m_type == 'AL' and message =='INVALID_PACKET_DISCONNECTED':
                         print("Forced disconnect, shutting down.")
                         self.conn.close()
                         CONNECTED = False
                     else:
                         pass
-
+            except Exception:
+                print("Connection error: Socket closed")
+                CONNECTED = False
            
 
-
-username = input("Enter a username: ")
-USERNAME = username
 
 clientn = clientn(client, addr)
 thread = threading.Thread(target=clientn.read)
 thread.start()
 
-setusername = 'SUN ' + USERNAME
-length = len(setusername)
-
-
-
-clientn.send_raw(setusername)
+choice = input("Welcome to PyChat! Type '1' for login or '2' to register an account: ")
+if choice == '1':
+    username = input("Enter username: ")
+    password = input("Enter password: ")
+    clientn.send_raw(f'LI {username} {password}')
+elif choice == '2':
+    username = input("Enter username: ")
+    password = input("Enter password: ")
+    clientn.send_raw(f'REG {username} {password}')
+    CONNECTED = False
+    quit()
+else:
+    print("Invalid response!")
+    CONNECTED = False
+    quit()
+    
 
 while CONNECTED:
     msg = input()

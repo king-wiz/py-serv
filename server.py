@@ -1,4 +1,4 @@
-import socket, ssl, threading
+import socket, ssl, threading, login
 
 HOST, PORT = '0.0.0.0', 500
 ADDR = (HOST, PORT)
@@ -20,17 +20,27 @@ MAX_PACKET_SIZE = 512
 
 INVALID_PACKET = 'AL INVALID_PACKET_DISCONNECTED'
 CLEAN_DISCONNECT = 'AL DISCONNECTED'
-REPLY = 'R MESSAGE_SENT'
 
-SETUSERNAME = 'SUN'
+INVALID_LOGIN = 'AL INVALID_LOGIN'
+INVALID_REGISTER = 'AL INVALID_REGISTER'
+
+LOGGED_IN = 'LI SUCCESS'
+REGISTER_SUCCESS = 'REG SUCCESS'
+
+REPLY = 'R MESSAGE_SENT'
 HEADER = 64
+LOGIN = 'LI'
 
 def decode(packet: str):
     packetl = packet.split()
-    string = ''
-    for i in packetl[1:len(packetl)]:
-        string += (f'{i} ')
-    return [packetl[0], string.rstrip()]
+    if packetl[0] == 'LI' or packetl[0] == 'REG' or packetl[0] == 'LO':
+        return packetl
+    else:
+        string = ''
+        for i in packetl[1:len(packetl)]:
+            string += (f'{i} ')
+        return [packetl[0], string.rstrip()]
+    
 
 class ThreadManager:
 
@@ -65,6 +75,7 @@ class ServerThread:
         self.is_active = True
         self.threadmanager = threadmanager
         self.username = ''
+        self.token = ''
 
     def is_active(self):
         return self.is_active
@@ -97,20 +108,51 @@ class ServerThread:
                     msg_length = int(msg_length)
                     msg = self.conn.recv(msg_length).decode(FORMAT)
                     msg_list = decode(msg)
-                    
                     #SUN logic:
 
-                    if msg_list[0] == 'SUN' and self.username == '':
-
-                        if msg_list[1] != '': 
-                            self.username = msg_list[1]
-                            print(f'[SERVER] {self.addr} set username to {self.username}.')
-                            self.conn.send(f'SUN SUCCESS'.encode(FORMAT))
-                            send_all(f'[SERVER] {self.username} connected!')
+                    if msg_list[0] == 'LI' and self.username == '':
+                        if len(msg_list) != 3:
+                            self.conn.send(INVALID_LOGIN.encode(FORMAT))
                         else:
-                            raise Exception
+                            if msg_list[1] != '' and msg_list[2] != '': 
+                            
+                                output = login.login(msg_list[1], msg_list[2])
+                                if output[0]:
+                                    self.token = output[1]
+                                    self.conn.send((LOGGED_IN + ' ' + output[1]).encode(FORMAT))
+                                    self.username = msg_list[1]
+                                    send_all(f'[SERVER] {self.username} connected!')
+                                    print(f'[SERVER] {self.username} connected!')
+                                else:
+                                    self.conn.send(INVALID_LOGIN.encode(FORMAT))
 
-                    elif msg_list[0] == 'SUN' and self.username != '':
+                            else:
+                                self.conn.send(INVALID_LOGIN.encode(FORMAT))
+                    
+                    elif msg_list[0] == 'REG' and self.username == '':
+                        if len(msg_list) != 3:
+                            self.conn.send(INVALID_REGISTER.encode(FORMAT))
+                        else:
+                            if msg_list[1] != '' and msg_list[2] != '':
+
+                                output = login.register(msg_list[1], msg_list[2])
+                                if output:
+                                    self.conn.send(REGISTER_SUCCESS.encode(FORMAT))
+                                else:
+                                    self.conn.send(INVALID_REGISTER.encode(FORMAT))
+                        
+                    elif msg_list[0] == 'LO':
+
+                        if len(msg_list) != 2:
+                            raise Exception
+                        else:
+                            login.logout(self.token)
+                            print(f'[SERVER] {self.username} disconnected!')
+                            self.is_active = False
+                            self.conn.close()
+                            break
+
+                    elif (msg_list[0] == 'LI' or msg_list[0] == 'REG') and self.username != '':
 
                         raise Exception
 
@@ -129,6 +171,7 @@ class ServerThread:
                             SERVER_THREADS.remove(self)
                             self.is_active = False
                             self.conn.close()
+                            login.logout(self.token)
                             break
                     else:
                         print("ERROR")
@@ -137,9 +180,12 @@ class ServerThread:
                 print(f"[SERVER] Client disconnected. {self.addr}")
                 
                 SERVER_THREADS.remove(self)
-                send_all(f'[SERVER] {self.username} disconnected!')
+                if self.username != '':
+                    print(f'[SERVER] {self.username} disconnected!')
+                    send_all(f'[SERVER] {self.username} disconnected!')
                 self.is_active = False
                 self.conn.close()
+                login.logout(self.token)
                 break
 
             except ValueError:
@@ -147,6 +193,7 @@ class ServerThread:
                 self.conn.send(INVALID_PACKET.encode(FORMAT))
                 self.conn.close()
                 self.is_active = False
+                login.logout(self.token)
                 break
 
             except Exception as e:
@@ -154,6 +201,7 @@ class ServerThread:
                 self.conn.send(INVALID_PACKET.encode(FORMAT))
                 self.conn.close()
                 self.is_active = False
+                login.logout(self.token)
                 break
         
 
