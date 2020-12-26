@@ -129,7 +129,7 @@ class clientn:
                     elif m_type == 'LI' and message == 'SUCCESS':
                         self.token = array[2]
                         LOGGED_IN = True
-                        print("Logged in! Type !disconnect to logout!")
+                        print("Logged in! Type !disconnect to logout.")
                     elif m_type == 'REG' and message == 'SUCCESS':
                         print("Username registered! Press 1 to log in!")
                     elif m_type == 'AL' and message == 'INVALID_LOGIN':
@@ -170,7 +170,9 @@ while not LOGGED_IN:
     else:
         print("Invalid response!")
         time.sleep(2.5)
-    
+        
+def disconnect(token):
+    clientn.send_raw(f"LO {token}")
 
 while CONNECTED:
     msg = input()
@@ -183,9 +185,6 @@ while CONNECTED:
     else:
         clientn.send(f'{msg}')
 
-
-def disconnect(token):
-    clientn.send_raw(f"LO {token}")
 
 
 
