@@ -11,7 +11,7 @@ SERVER = 'database-2.ca1ssxyjeifl.us-east-2.rds.amazonaws.com'
 PORT = '3306'
 ADDR = (SERVER, PORT)
 
-mysql_socket = mysql.connector.connect(host=SERVER, user='admin', password='rdstest1')
+mysql_socket = mysql.connector.connect(host=SERVER, user='admin', password='xxxxxxxxxxx')
 cursor = mysql_socket.cursor(buffered=True)
 
 cursor.execute("USE userdata")
