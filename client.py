@@ -16,10 +16,10 @@ print(f"Connecting to {SERVER}...")
 client = None
 
 try:
-    #context = ssl.SSLContext(ssl.PROTOCOL_TLSv1_2)
+    context = ssl.SSLContext(ssl.PROTOCOL_TLSv1_2)
     addr = (SERVER, PORT)
-    #wrappedSocket = context.wrap_socket(sock)
-    #wrappedSocket.connect(addr)
+    wrappedSocket = context.wrap_socket(sock)
+    wrappedSocket.connect(addr)
     wrappedSocket = sock
     client = wrappedSocket
     client.connect(addr)
