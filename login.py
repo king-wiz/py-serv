@@ -60,8 +60,8 @@ def reconnect():
         MYSQL_SOCKET.connect(
 
             host=SERVER,
-            user='root',
-            password='phoenixpower1'
+            user='admin',
+            password=''
 
         )
 
