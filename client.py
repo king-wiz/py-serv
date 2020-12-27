@@ -179,7 +179,7 @@ while CONNECTED:
     if len(msg) > 512:
         print("Message too long!")
         time.sleep(1)
-    elif len(msg) == 0"
+    elif len(msg) == 0:
         print("no message entered")
         time.sleep(1)
     elif msg == '!disconnect':
