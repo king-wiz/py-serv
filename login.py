@@ -35,7 +35,7 @@ MYSQL_SOCKET = mysql.connector.connect(
 
     host=SERVER,
     user='admin',
-    password='sha512hashingexception'
+    password=''
 
 )
 
