@@ -109,9 +109,12 @@ SERVER_THREADS = []
 
 # SSL Init. Comment out to remove SSL implementation.
 
+
 CONTEXT = ssl.SSLContext(ssl.PROTOCOL_TLSv1_2)
-CONTEXT.load_cert_chain(certfile='/path/to/cert',
-                        keyfile='/path/to/private-key')
+CONTEXT.load_cert_chain(
+    certfile='/etc/letsencrypt/live/api.python-chat.com/fullchain.pem',
+    keyfile='/etc/letsencrypt/live/api.python-chat.com/privkey.pem'
+)
 
 # Server init. Comment out SERVER = CONTEXT.wrap_socket(SERVER)
 # to remove SSL implementation
@@ -435,7 +438,7 @@ class server_thread:
 
                         else:
 
-                            if msg_list[2] != self.token:
+                            if msg_list[1] != self.token:
 
                                 self.send_packet(INVALID_LOGOUT)
 

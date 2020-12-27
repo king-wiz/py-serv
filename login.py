@@ -35,7 +35,7 @@ MYSQL_SOCKET = mysql.connector.connect(
 
     host=SERVER,
     user='admin',
-    password=''
+    password='nopassword4u'
 
 )
 
@@ -61,7 +61,7 @@ def reconnect():
 
             host=SERVER,
             user='admin',
-            password=''
+            password='nopassword4u'
 
         )
 
@@ -140,7 +140,7 @@ def register(
 
         SELECT *
 
-        FROM userdata.user_login
+        FROM users.user_login
 
         WHERE username = %(username)s;
 
@@ -169,7 +169,7 @@ def register(
 
             """
 
-            INSERT INTO userdata.user_login (
+            INSERT INTO users.user_login (
 
                 username,
                 salt,
@@ -233,7 +233,7 @@ def login(
         """
         SELECT *
 
-        FROM userdata.user_login
+        FROM users.user_login
 
         WHERE
 
@@ -270,7 +270,7 @@ def login(
 
                 """
 
-                UPDATE userdata.user_login
+                UPDATE users.user_login
 
                 SET
 
@@ -311,7 +311,7 @@ def logout(token: str):
 
         """
 
-        UPDATE userdata.user_login
+        UPDATE users.user_login
 
         SET
 
