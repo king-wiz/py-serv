@@ -10,7 +10,7 @@ security vulnerabilities.
 
 import socket
 import threading
-# import ssl
+import ssl
 import time
 
 FORMAT = 'utf-8'
@@ -22,7 +22,7 @@ TYPE_MSG = 'M'
 USERNAME = ''
 SERVER_DISCONNECT_CLEAN = 'AL DISCONNECTED'
 
-SERVER = 'localhost'
+SERVER = 'api.python-chat.com'
 PORT = 500
 ADDR = (SERVER, PORT)
 
@@ -213,8 +213,8 @@ print(f'Connection to {SERVER}...')
 
 try:
 
-    # context = ssl.SSLContext(ssl.PROTOCOL_TLSv1_2)
-    # CLIENT = context.wrap_socket(CLIENT)
+    context = ssl.SSLContext(ssl.PROTOCOL_TLSv1_2)
+    CLIENT = context.wrap_socket(CLIENT)
     CLIENT.connect(ADDR)
 
 except Exception:
