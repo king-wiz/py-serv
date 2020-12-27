@@ -444,6 +444,8 @@ class server_thread:
 
                             else:
 
+                                self.send_packet(LOGGED_OUT)
+
                                 login.logout(self.token)
 
                                 print(

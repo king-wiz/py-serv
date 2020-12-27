@@ -10,7 +10,7 @@ security vulnerabilities.
 
 import socket
 import threading
-import ssl
+# import ssl
 import time
 
 FORMAT = 'utf-8'
@@ -22,7 +22,7 @@ TYPE_MSG = 'M'
 USERNAME = ''
 SERVER_DISCONNECT_CLEAN = 'AL DISCONNECTED'
 
-SERVER = 'api.python-chat.com'
+SERVER = 'localhost'
 PORT = 500
 ADDR = (SERVER, PORT)
 
@@ -122,10 +122,6 @@ class python_client:
         global CONNECTED, LOGGED_IN
 
         self.send_raw(f"LO {self.token}")
-        CONNECTED = False
-        LOGGED_IN = False
-
-        print("You have logged out!")
 
     def disconnect(self, token: str):
 
@@ -171,7 +167,8 @@ class python_client:
                     elif m_type == 'LO' and message == 'SUCCESS':
 
                         print("Logged out!")
-                        time.sleep(2)
+                        CONNECTED = False
+                        LOGGED_IN = False
                         quit()
 
                     elif m_type == 'AL' and message == 'INVALID_LOGIN':
@@ -216,8 +213,8 @@ print(f'Connection to {SERVER}...')
 
 try:
 
-    context = ssl.SSLContext(ssl.PROTOCOL_TLSv1_2)
-    CLIENT = context.wrap_socket(CLIENT)
+    # context = ssl.SSLContext(ssl.PROTOCOL_TLSv1_2)
+    # CLIENT = context.wrap_socket(CLIENT)
     CLIENT.connect(ADDR)
 
 except Exception:
@@ -302,6 +299,7 @@ while LOGGED_IN:
     elif msg == '!disconnect':
 
         CLIENTX.logout()
+        time.sleep(2.5)
 
     else:
 
