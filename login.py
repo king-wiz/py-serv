@@ -1,168 +1,335 @@
-# Login/Register functionality
+'''
+--------------------------------------------------------------------
+
+MYSQL BACKEND:
+
+Implements LOGIN, LOGOUT, and REGISTER functionality. Uses MySQL
+queries to do this and connects to a remote database storing the
+credentials.
+
+Imports:
+
+mysql.connector: MySQL connector to remote database
+bcrypt: Salt module
+hashlib: Hashing module
+uuid: Used to generate login-tokens.
+
+Constants:
+
+SERVER: Specifies an off-site database to connect to
+
+MYSQL_SOCKET: Socket for MySQL to read/recieve data from
+CURSOR: Used to send queries to SERVER
+
+--------------------------------------------------------------------
+'''
 
 import mysql.connector
 import bcrypt
 import hashlib
 import uuid
 
-# Init MySQL connection.
+SERVER = 'database-3.ca1ssxyjeifl.us-east-2.rds.amazonaws.com'
 
-SERVER = 'some database'
-PORT = '3306'
-ADDR = (SERVER, PORT)
+MYSQL_SOCKET = mysql.connector.connect(
 
-mysql_socket = mysql.connector.connect(host=SERVER, user='admin', password='xxxxxxxxxxxxxxx')
-cursor = mysql_socket.cursor(buffered=True)
+    host=SERVER,
+    user='admin',
+    password='sha512hashingexception'
 
-cursor.execute("USE userdata")
+)
+
+CURSOR = MYSQL_SOCKET.cursor(buffered=True)
+
+CURSOR.execute("USE users")
+
+'''
+--------------------------------------------------------------------
+
+def reconnect(): Called everytime a query is executed to make sure
+                 that we are connected to SERVER
+
+--------------------------------------------------------------------
+'''
+
 
 def reconnect():
+
     try:
-        mysql_socket = mysql.connector.connect(host=SERVER, user='localhost', password='phoenixpower1')
+
+        MYSQL_SOCKET.connect(
+
+            host=SERVER,
+            user='root',
+            password='phoenixpower1'
+
+        )
+
     except Exception:
+
         pass
+
+
+'''
+--------------------------------------------------------------------
+
+def hash(string: str): Returns the SHA512 hash of the
+                       given argument.
+
+--------------------------------------------------------------------
+'''
+
+
 def hash(string: str):
 
-    h = hashlib.sha512(string.encode('utf-8')).hexdigest()
-    return h
+    hash = hashlib.sha512(
+
+        string.encode('utf-8')
+
+    ).hexdigest()
+
+    return hash
+
+
+'''
+--------------------------------------------------------------------
+
+def generate_salt(): Generate a salt of size 32
+
+--------------------------------------------------------------------
+'''
+
 
 def generate_salt():
 
     return str(bcrypt.gensalt(24))
 
-def register(user, password):
 
-    if len(user) == 0 or len(password) == 0:
+'''
+--------------------------------------------------------------------
+
+def register(user: str, password: str): Register a new user if noone
+else has the username specified
+
+--------------------------------------------------------------------
+'''
+
+
+def register(
+
+    user: str,
+    password: str
+
+):
+
+    if (
+
+        len(user) == 0
+        or len(password) == 0
+        or len(user) > 16
+
+    ):
+
         return False
 
     reconnect()
-    cursor.execute("""
-    
-        SELECT
-            *
-        FROM
-            user_login
-        WHERE
-            username = %(username)s 
-    
-    """, {
-        'username': user
-    })
 
-    result = cursor.fetchone()
+    CURSOR.execute(
 
-    
+        """
+
+        SELECT *
+
+        FROM userdata.user_login
+
+        WHERE username = %(username)s;
+
+        """, {
+
+            'username': user
+
+        }
+    )
+
+    result = CURSOR.fetchone()
 
     if result is None:
 
         salt = generate_salt()
 
-        passhash = hash(password+salt)
-        
+        passhash = hash(
 
-        if len(password) > 16 or len(user) > 16:
+            password+salt
 
-            return False
+        )
+
         reconnect()
-        cursor.execute("""
-        
-            INSERT INTO user_login (username, salt, password, logged_in, token)
-            
-            VALUES (%(username)s, %(salt)s, %(password)s, False, Null)
 
-        """, {
+        CURSOR.execute(
 
-            'username': user,
-            'salt': salt,
-            'password': passhash
+            """
 
-        })
+            INSERT INTO userdata.user_login (
 
-        mysql_socket.commit()
+                username,
+                salt,
+                password,
+                logged_in,
+                token
+
+            )
+
+            VALUES (
+
+                %(username)s,
+                %(salt)s,
+                %(password)s,
+                False,
+                Null
+
+            )
+
+            """, {
+
+                'username': user,
+                'salt': salt,
+                'password': passhash
+
+            }
+
+        )
+
+        MYSQL_SOCKET.commit()
 
         return True
-        
-    
+
     else:
-        
+
         return False
 
 
-def login(user, password):
+'''
+--------------------------------------------------------------------
+
+def login(user: str, password: str): Login a user. If successful,
+                                     generate a new token until they
+                                     disconnect/logout.
+
+--------------------------------------------------------------------
+'''
+
+
+def login(
+
+    user: str,
+    password: str
+
+):
+
     reconnect()
-    cursor.execute("""
-    
-        SELECT
-            *
-        FROM
-            user_login
+
+    CURSOR.execute(
+
+        """
+        SELECT *
+
+        FROM userdata.user_login
+
         WHERE
-            username = %(username)s and
-            logged_in = False
-    
-    """, {
-        'username': user
-    })
 
-    result = cursor.fetchone()
+            logged_in = False and
+            username = %(username)s
 
-    if result != None:
+        """, {
+
+            'username': user
+
+        }
+
+    )
+
+    result = CURSOR.fetchone()
+
+    if result is not None:
 
         token = uuid.uuid4().hex
 
         salt = result[1]
         password_sum = result[2]
 
+        if(
 
+            hash(password+salt) ==
+            password_sum
 
-        if hash(password+salt) == password_sum:
+        ):
+
             reconnect()
-            cursor.execute("""
-            
-            UPDATE 
-	            user_login
-            SET
-	            logged_in = True,
-	            token = %(token)s
-            WHERE
-                username = %(username)s
-            """, {
 
-                'token': token,
-                'username': user
+            CURSOR.execute(
 
-            })
+                """
 
-            mysql_socket.commit()
+                UPDATE userdata.user_login
+
+                SET
+
+                    logged_in = True,
+                    token = %(token)s
+
+                WHERE
+
+                    username = %(username)s;
+
+                """, {
+
+                    'token': token,
+                    'username': user
+
+                }
+
+            )
+
+            MYSQL_SOCKET.commit()
 
             return [True, token]
 
         else:
 
             return [False]
-    
+
     else:
 
         return [False]
 
-def logout(token):
-    reconnect()
-    cursor.execute("""
 
-        UPDATE 
-            user_login
+def logout(token: str):
+
+    reconnect()
+
+    CURSOR.execute(
+
+        """
+
+        UPDATE userdata.user_login
+
         SET
+
             logged_in = False,
             token = null
+
         WHERE
-            token = %(token)s
 
-    
-    """, {
+            token = %(token)s;
 
-        'token': token
+        """, {
 
-    })
+            'token': token
 
+        }
 
-    mysql_socket.commit()
+    )
+
+    MYSQL_SOCKET.commit()
+
+# EOF
