@@ -19,7 +19,7 @@ login module: Used to manage logins/registers/logouts for users
 '''
 
 import socket
-# import ssl
+import ssl
 import threading
 import login
 
@@ -109,11 +109,10 @@ SERVER_THREADS = []
 
 # SSL Init. Comment out to remove SSL implementation.
 
-'''
 CONTEXT = ssl.SSLContext(ssl.PROTOCOL_TLSv1_2)
 CONTEXT.load_cert_chain(certfile='/path/to/cert',
                         keyfile='/path/to/private-key')
-'''
+
 # Server init. Comment out SERVER = CONTEXT.wrap_socket(SERVER)
 # to remove SSL implementation
 
@@ -122,7 +121,7 @@ SERVER = socket.socket(
     socket.SOCK_STREAM
 )
 
-# SERVER = CONTEXT.wrap_socket(SERVER)
+SERVER = CONTEXT.wrap_socket(SERVER)
 
 SERVER.bind(ADDR)
 SERVER.listen(5)
